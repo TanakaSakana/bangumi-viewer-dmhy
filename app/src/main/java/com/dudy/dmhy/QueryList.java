@@ -2,8 +2,12 @@ package com.dudy.dmhy;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -11,17 +15,18 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class QueryList extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+public class QueryList extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
     TextView resultTable;
     SwipeRefreshLayout swipeRefreshLayout;
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_query_list);
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.main_swipe);
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View row = inflater.inflate(R.layout.activity_query_list, null);
+        swipeRefreshLayout = (SwipeRefreshLayout) row.findViewById(R.id.main_swipe);
         swipeRefreshLayout.setOnRefreshListener(this);
-        resultTable = (TextView) findViewById(R.id.main_result);
+        resultTable = (TextView) row.findViewById(R.id.main_result);
+        return row;
     }
 
     @Override
@@ -48,13 +53,20 @@ public class QueryList extends AppCompatActivity implements SwipeRefreshLayout.O
             Document doc;
             try {
                 doc = Jsoup.connect(html).get();
-                Elements table = doc.getElementsByClass("title");
+                Elements table = doc.getElementsByTag("tbody");
+                Elements rows = table.select("tr");
 
-                for (int i = 9; i < table.size(); i++) {
-                    Element e = table.get(i);
-                    Elements se = e.select("a[href]");
-                    e = se.last();
-                    result += String.format("[%d] : %s\n", i-8, e.text());
+                for (Element row : rows) {
+                    Elements items = row.select("td");
+                    result += String.format("Data\t : %s\n", items.eq(0).text());
+                    result += String.format("Type\t : %s\n", items.eq(1).text());
+                    result += String.format("Title\t : %s\n", items.eq(2).text());
+                    result += String.format("Size\t : %s\n", items.eq(4).text());
+                    result += String.format("Seeds\t : %s\n", items.eq(5).text());
+                    result += String.format("Peers\t : %s\n", items.eq(6).text());
+                    result += String.format("Download : %s\n", items.eq(7).text());
+                    result += String.format("Host\t : %s\n", items.eq(8).text());
+                    result += "\n";
                 }
             } catch (Exception e) {
                 e.printStackTrace();
