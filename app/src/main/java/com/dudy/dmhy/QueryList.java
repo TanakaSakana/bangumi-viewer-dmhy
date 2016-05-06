@@ -2,7 +2,6 @@ package com.dudy.dmhy;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
@@ -19,9 +18,8 @@ public class QueryList extends Fragment implements SwipeRefreshLayout.OnRefreshL
     TextView resultTable;
     SwipeRefreshLayout swipeRefreshLayout;
 
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View row = inflater.inflate(R.layout.activity_query_list, null);
         swipeRefreshLayout = (SwipeRefreshLayout) row.findViewById(R.id.main_swipe);
         swipeRefreshLayout.setOnRefreshListener(this);

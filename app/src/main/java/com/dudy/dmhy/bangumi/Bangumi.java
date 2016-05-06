@@ -1,6 +1,8 @@
-package com.dudy.dmhy;
+package com.dudy.dmhy.bangumi;
 
-public class Bangumi {
+import java.io.Serializable;
+
+public class Bangumi implements Serializable {
     String Name;
     String Image;
     String Link;

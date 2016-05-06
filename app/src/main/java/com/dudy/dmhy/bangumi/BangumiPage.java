@@ -1,16 +1,19 @@
-package com.dudy.dmhy;
+package com.dudy.dmhy.bangumi;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.LinearLayoutManager;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.dudy.dmhy.R;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -20,59 +23,59 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BangumiPage extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+public class BangumiPage extends Fragment implements OnRefreshListener, BangumiAdapter.ClickListener {
+
+    public static BangumiList bitmapList;
+    final String filename = "bangumi_cache";
     List<Bangumi> WeeklyList = new ArrayList<>();
     SwipeRefreshLayout swipe;
     BangumiAdapter adapter;
     RecyclerView recycler;
     View row;
 
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         row = inflater.inflate(R.layout.activity_bangumi, null);
-
+        new grabBangumi().execute();
         return row;
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        StaggeredGridLayoutManager gaggeredGridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
 
         adapter = new BangumiAdapter(getContext(), WeeklyList);
 
         recycler = (RecyclerView) row.findViewById(R.id.recycler_bangumi);
         recycler.setAdapter(adapter);
-        recycler.setLayoutManager(layoutManager);
+        recycler.setLayoutManager(gaggeredGridLayoutManager);
 
         swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
         swipe.setOnRefreshListener(this);
+        adapter.setClickListener(this);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        new grabBangumi().execute();
+    public void itemClicked(View view, String link) {
+        Uri uri = Uri.parse(link);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 
     @Override
     public void onRefresh() {
         new grabBangumi().execute();
-        adapter.notifyDataSetChanged();
     }
 
     class grabBangumi extends AsyncTask<Void, Void, List<Bangumi>> {
         @Override
         protected List<Bangumi> doInBackground(Void... params) {
             try {
-                Log.e("doInBackground", "OK");
                 return grabBangumi();
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e("printStackTrace", "OK");
             }
             return null;
         }
@@ -80,9 +83,16 @@ public class BangumiPage extends Fragment implements SwipeRefreshLayout.OnRefres
         @Override
         protected void onPostExecute(List<Bangumi> bangumis) {
             super.onPostExecute(bangumis);
-            WeeklyList.addAll(bangumis);
+            if (bangumis != null && !bangumis.isEmpty()) {
+                WeeklyList.clear();
+                WeeklyList.addAll(bangumis);
+            }
+
             swipe.setRefreshing(false);
             adapter.notifyDataSetChanged();
+
+            bitmapList = new BangumiList(WeeklyList);
+            bitmapList.renderImage(getActivity());
         }
 
         public List<Bangumi> grabBangumi() throws Exception {
