@@ -1,4 +1,4 @@
-package com.dudy.dmhy.bangumi;
+package com.BangumiList.bangumi;
 
 import java.io.Serializable;
 
@@ -17,7 +17,7 @@ public class Bangumi implements Serializable {
         return Name;
     }
 
-    public String getImage() {
+    public String getImageLink() {
         return Image;
     }
 

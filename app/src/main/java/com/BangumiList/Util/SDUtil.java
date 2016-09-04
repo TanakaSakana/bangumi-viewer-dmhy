@@ -1,9 +1,8 @@
-package com.dudy.dmhy;
+package com.BangumiList.Util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -15,8 +14,9 @@ import java.security.NoSuchAlgorithmException;
 public class SDUtil {
     public static Bitmap getSDImg(String key, Context context) {
         Bitmap bitmap;
+        String HashKey = md5(key);
         try {
-            BufferedInputStream in = new BufferedInputStream(context.openFileInput(key));
+            BufferedInputStream in = new BufferedInputStream(context.openFileInput(HashKey));
             bitmap = BitmapFactory.decodeStream(in);
             return bitmap;
         } catch (FileNotFoundException e) {
@@ -28,12 +28,14 @@ public class SDUtil {
     public static boolean saveSDImg(Bitmap img, String key, Context context) {
         if (img == null)
             return false;
+        String HashKey = md5(key);
         try {
-            BufferedOutputStream out = new BufferedOutputStream(context.openFileOutput(key, Context.MODE_PRIVATE));
-            img.compress(Bitmap.CompressFormat.PNG, 100, out);
+            BufferedOutputStream out = new BufferedOutputStream(context.openFileOutput(HashKey, Context.MODE_PRIVATE));
+            img.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
             out.close();
         } catch (IOException e) {
+            e.printStackTrace();
         }
         return true;
     }
