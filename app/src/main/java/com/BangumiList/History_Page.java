@@ -1,4 +1,4 @@
-package com.BangumiList.bangumi;
+package com.BangumiList;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
@@ -17,21 +16,20 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.BangumiList.GloVar.BangumiData;
-import com.BangumiList.R;
+import com.BangumiList.bangumi.Bangumi;
+import com.BangumiList.bangumi.BangumiAdapter;
+import com.BangumiList.bangumi.BangumiList;
+import com.dmhyparser.MainParser;
+import com.dmhyparser.info.BANGUMI;
+import com.dmhyparser.info.BangumiInfo;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class BangumiFragment extends Fragment implements OnRefreshListener, BangumiAdapter.ClickListener {
+public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefreshListener, BangumiAdapter.ClickListener {
 
-    public static BangumiList bitmapList;
-    List<Bangumi> WeeklyList = new ArrayList<>();
+    List<Bangumi> MainBangumiList = new ArrayList<>();
     SwipeRefreshLayout swipe;
     BangumiAdapter adapter;
     RecyclerView recycler;
@@ -40,12 +38,9 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
     private static Bundle mBundleRecyclerViewState;
     private final String KEY_RECYCLER_STATE = "recycler_state";
 
-    static boolean LOADED = false;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         row = inflater.inflate(R.layout.activity_bangumi, null);
-        if (!LOADED) new grabBangumi().execute();
         return row;
     }
 
@@ -55,7 +50,7 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
 
         StaggeredGridLayoutManager gaggeredGridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
 
-        adapter = new BangumiAdapter(getContext(), WeeklyList);
+        adapter = new BangumiAdapter(getContext(), MainBangumiList);
 
         recycler = (RecyclerView) row.findViewById(R.id.recycler_bangumi);
         recycler.setAdapter(adapter);
@@ -124,57 +119,43 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
 
         @Override
         protected List<Bangumi> doInBackground(Void... params) {
-            List<Bangumi> WeeklyList = new ArrayList<Bangumi>();
-            final String html = "https://share.dmhy.org/cms/page/name/programme.html/";
-            Document doc = null;
+            List<Bangumi> SeasonList = new ArrayList<>();
+            BANGUMI.BangumiInfoList = Collections.emptyList();
+
             try {
-                doc = Jsoup.connect(html).get();
-                String url = "^.*http://share.dmhy.org/images/weekly/.*[\\.jpg|\\.gif|\\.png].*$";
-                Pattern pattern = Pattern.compile(url);
-                Matcher matcher;
-
-                String[] rows = doc.toString().split("\n");
-
-                mSize = rows.length;
-                mDialog.setMax(mSize);
-
-                for (String row : rows) {
-                    publishProgress(++mCount);
-
-                    matcher = pattern.matcher(row);
-                    if (matcher.find()) {
-                        String[] rawAttrs = row.split(",");
-                        for (int i = 0; i < rawAttrs.length; i++) {
-                            rawAttrs[i] = rawAttrs[i].replaceAll("'", "");
-                        }
-                        String name = rawAttrs[1];
-                        String image = rawAttrs[0].replaceAll("^.*push\\(\\[", "");
-                        String link = rawAttrs[4].replaceAll("]\\);", "");
-                        Bangumi item = new Bangumi(name, image, link);
-                        WeeklyList.add(item);
-                    }
-                }
-                WeeklyList.remove(0);
-            } catch (IOException e) {
+                MainParser.update();
+            } catch (Exception e) {
                 e.printStackTrace();
+                Log.e("MainParser", "Error");
             }
-            return WeeklyList;
+            while (BANGUMI.getBangumiInfoList().size() <=500 && BANGUMI.BangumiInfoList.isEmpty()) {
+                Log.e("List size" , String.valueOf(BANGUMI.getBangumiInfoList().size()));
+            }
+            List<BangumiInfo> banList = BANGUMI.getBangumiInfoList();
+            mSize = banList.size();
+            mDialog.setMax(mSize);
+
+            for (BangumiInfo row : banList) {
+                publishProgress(++mCount);
+                Bangumi item = new Bangumi(row);
+                SeasonList.add(item);
+            }
+            return SeasonList;
         }
 
         @Override
         protected void onPostExecute(List<Bangumi> bangumis) {
             super.onPostExecute(bangumis);
+            Log.e("Postex", "Work");
             if (bangumis != null && !bangumis.isEmpty()) {
-                WeeklyList.clear();
-                WeeklyList.addAll(bangumis);
+                MainBangumiList.clear();
+                MainBangumiList.addAll(bangumis);
             }
             swipe.setRefreshing(false);
             mDialog.dismiss();
             adapter.notifyDataSetChanged();
-            BangumiData.banListA = new BangumiList(WeeklyList);
-            BangumiData.banListA.renderImage(getContext());
-
-            LOADED = true;
+            BangumiData.banListB = new BangumiList(MainBangumiList);
+            BangumiData.banListB.renderImage(getContext());
         }
     }
 }

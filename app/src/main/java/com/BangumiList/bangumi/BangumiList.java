@@ -1,6 +1,5 @@
 package com.BangumiList.bangumi;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,7 +19,9 @@ import java.util.concurrent.Future;
 
 public class BangumiList implements Serializable {
 
-    private static ArrayList<Bangumi> bangumiList = new ArrayList<>();
+    // This list is use to render bitmap
+
+    private ArrayList<Bangumi> bangumiList = new ArrayList<>();
     private static HashMap<String, Bitmap> bitmapList = new HashMap<>();
     private static ExecutorService executorService;
 
@@ -34,25 +35,18 @@ public class BangumiList implements Serializable {
             return bitmapList.get(Name);
         else if (SDUtil.getSDImg(Name, context) != null)
             return SDUtil.getSDImg(Name, context);
-        return null;
+        else
+            return null;
     }
 
-    public static void renderImage(Context mContext) {
-        ProgressDialog mDialog = new ProgressDialog(mContext);
-        mDialog.setTitle("Loading Image");
-        mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mDialog.setIndeterminate(false);
-        mDialog.setCancelable(false);
-        mDialog.setMax(bangumiList.size());
-        mDialog.show();
-
+    // Image archival strategy
+    public void renderImage(Context mContext) {
         executorService = Executors.newCachedThreadPool();
 
         for (Bangumi item : bangumiList) {
             String Name = item.getName();
             Bitmap BitmapTemp;
             if (!bitmapList.containsKey(Name) || bitmapList.get(Name) == null) {
-                mDialog.incrementProgressBy(1);
                 if ((BitmapTemp = SDUtil.getSDImg(Name, mContext)) != null)
                     bitmapList.put(Name, BitmapTemp);
                 else if ((BitmapTemp = getImg(item.getImageLink())) != null) {
@@ -62,10 +56,10 @@ public class BangumiList implements Serializable {
             }
         }
         executorService.shutdown();
-        mDialog.dismiss();
     }
 
-    public static Bitmap getImg(final String path) {
+    // Get image from internet
+    public Bitmap getImg(final String path) {
         Future<Bitmap> future = executorService.submit(new Callable<Bitmap>() {
             @Override
             public Bitmap call() throws Exception {

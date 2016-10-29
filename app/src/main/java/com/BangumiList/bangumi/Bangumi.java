@@ -1,5 +1,7 @@
 package com.BangumiList.bangumi;
 
+import com.dmhyparser.info.BangumiInfo;
+
 import java.io.Serializable;
 
 public class Bangumi implements Serializable {
@@ -11,6 +13,12 @@ public class Bangumi implements Serializable {
         Name = name;
         Image = image;
         Link = link;
+    }
+
+    public Bangumi(BangumiInfo bangumiInfo) {
+        Name = bangumiInfo.getName();
+        Image = bangumiInfo.getImg();
+        Link = bangumiInfo.getHp();
     }
 
     public String getName() {

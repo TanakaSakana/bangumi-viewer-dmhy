@@ -35,7 +35,7 @@ public class Pager_Page extends AppCompatActivity {
                     case 1:
                         return new BangumiFragment();
                     case 2:
-                        return new Soruly_Page();
+                        return new History_Page();
                     default:
                         return null;
                 }
@@ -47,15 +47,12 @@ public class Pager_Page extends AppCompatActivity {
     public void FragmentRedirect() {
         switch (getIntent().getAction()) {
             case "Bangumi":
-                Log.e("A","a");
                 mViewPager.setCurrentItem(0);
                 break;
             case "DMHY":
-                Log.e("A","b");
                 mViewPager.setCurrentItem(1);
                 break;
-            case "soruly":
-                Log.e("A","c");
+            case "History":
                 mViewPager.setCurrentItem(2);
                 break;
         }

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="dmhyparser">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/dmhyparser.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

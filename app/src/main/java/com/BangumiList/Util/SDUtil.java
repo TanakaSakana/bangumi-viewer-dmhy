@@ -20,9 +20,8 @@ public class SDUtil {
             bitmap = BitmapFactory.decodeStream(in);
             return bitmap;
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     public static boolean saveSDImg(Bitmap img, String key, Context context) {

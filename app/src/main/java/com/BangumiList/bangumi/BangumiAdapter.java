@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.BangumiList.GloVar.BangumiData;
 import com.BangumiList.R;
 
 import java.util.Collections;
@@ -39,7 +40,7 @@ public class BangumiAdapter extends RecyclerView.Adapter<BangumiAdapter.BangumiH
         Bitmap BitmapTemp;
 
         holder.name.setText(bangumi.getName());
-        if ((BitmapTemp = BangumiList.getBangumiBitmap(bangumi.getName(), mContext)) != null)
+        if ((BitmapTemp =BangumiList.getBangumiBitmap(bangumi.getName(), mContext)) != null)
             holder.image.setImageBitmap(BitmapTemp);
     }
 
