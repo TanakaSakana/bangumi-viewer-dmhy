@@ -20,36 +20,28 @@ public class Pager_Page extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setOffscreenPageLimit(3);
         mViewPager.setAdapter(new FragmentStatePagerAdapter((FragmentManager) getSupportFragmentManager()) {
             @Override
             public int getCount() {
-                return 2;
+                return 3;
             }
 
             @Override
             public Fragment getItem(int position) {
                 switch (position) {
                     case 0:
-                        return new BangumiFragment();
+                        return new Glimpse_Page();
                     case 1:
-                        return new History_Page();
+                        return new BangumiFragment();
+                    case 2 :
+                        return new  History_Page();
                     default:
                         return null;
                 }
             }
         });
-        FragmentRedirect();
-    }
 
-    public void FragmentRedirect() {
-        switch (getIntent().getAction()) {
-            case "DMHY":
-                mViewPager.setCurrentItem(0);
-                break;
-            case "History":
-                mViewPager.setCurrentItem(1);
-                break;
-        }
     }
 
     @Override
