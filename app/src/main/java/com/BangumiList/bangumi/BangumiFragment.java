@@ -1,9 +1,8 @@
 package com.BangumiList.bangumi;
 
-import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -11,13 +10,13 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.BangumiList.GloVar.BangumiData;
 import com.BangumiList.R;
+import com.BangumiList.Util.BaseAsyncBangumi;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,21 +30,23 @@ import java.util.regex.Pattern;
 public class BangumiFragment extends Fragment implements OnRefreshListener, BangumiAdapter.ClickListener {
 
     public static BangumiList bitmapList;
+    static boolean LOADED = false;
+    private static Bundle mBundleRecyclerViewState;
+    private final String KEY_RECYCLER_STATE = "recycler_state";
     List<Bangumi> WeeklyList = new ArrayList<>();
     SwipeRefreshLayout swipe;
     BangumiAdapter adapter;
     RecyclerView recycler;
     View row;
 
-    private static Bundle mBundleRecyclerViewState;
-    private final String KEY_RECYCLER_STATE = "recycler_state";
-
-    static boolean LOADED = false;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         row = inflater.inflate(R.layout.activity_bangumi, null);
-        if (!LOADED) new grabBangumi().execute();
+
+        adapter = new BangumiAdapter(getContext(), WeeklyList);
+        swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
+        if (!LOADED)
+            new grabBangumi(getContext(), adapter, swipe).execute();
         return row;
     }
 
@@ -55,13 +56,10 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
 
         StaggeredGridLayoutManager gaggeredGridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
 
-        adapter = new BangumiAdapter(getContext(), WeeklyList);
-
         recycler = (RecyclerView) row.findViewById(R.id.recycler_bangumi);
         recycler.setAdapter(adapter);
         recycler.setLayoutManager(gaggeredGridLayoutManager);
 
-        swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
         swipe.setOnRefreshListener(this);
         adapter.setClickListener(this);
     }
@@ -95,39 +93,23 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
 
     @Override
     public void onRefresh() {
-        new grabBangumi().execute();
+        new grabBangumi(getContext(), adapter, swipe).execute();
     }
 
-    class grabBangumi extends AsyncTask<Void, Integer, List<Bangumi>> {
+    public class grabBangumi extends BaseAsyncBangumi {
 
-        ProgressDialog mDialog;
-        int mCount = 0;
-        int mSize = 0;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mDialog = new ProgressDialog(getContext());
-            mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mDialog.setTitle(String.format("Loading Information"));
-            mDialog.setIndeterminate(false);
-            mDialog.setCancelable(false);
-            mDialog.show();
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            mDialog.setProgress(mCount);
-            adapter.notifyDataSetChanged();
-            super.onProgressUpdate(values);
+        public grabBangumi(Context context, BangumiAdapter adapter, SwipeRefreshLayout swipe) {
+            super(context, adapter, swipe);
         }
 
         @Override
         protected List<Bangumi> doInBackground(Void... params) {
             List<Bangumi> WeeklyList = new ArrayList<Bangumi>();
             final String html = "https://share.dmhy.org/cms/page/name/programme.html/";
-            Document doc = null;
-            try {
+            Document doc;
+            try{
+                publishProgress(0, 2);
+
                 doc = Jsoup.connect(html).get();
                 String url = "^.*http://share.dmhy.org/images/weekly/.*[\\.jpg|\\.gif|\\.png].*$";
                 Pattern pattern = Pattern.compile(url);
@@ -137,10 +119,10 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
 
                 mSize = rows.length;
                 mDialog.setMax(mSize);
+                publishProgress(0, 3);
 
                 for (String row : rows) {
-                    publishProgress(++mCount);
-
+                    publishProgress(++mCount, 3);
                     matcher = pattern.matcher(row);
                     if (matcher.find()) {
                         String[] rawAttrs = row.split(",");
@@ -152,6 +134,7 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
                         String link = rawAttrs[4].replaceAll("]\\);", "");
                         Bangumi item = new Bangumi(name, image, link);
                         WeeklyList.add(item);
+                        // Progress ++
                     }
                 }
                 WeeklyList.remove(0);
@@ -168,12 +151,8 @@ public class BangumiFragment extends Fragment implements OnRefreshListener, Bang
                 WeeklyList.clear();
                 WeeklyList.addAll(bangumis);
             }
-            swipe.setRefreshing(false);
-            mDialog.dismiss();
-            adapter.notifyDataSetChanged();
             BangumiData.banListA = new BangumiList(WeeklyList);
-            BangumiData.banListA.renderImage(getContext());
-
+            BangumiData.banListA.ImageArchiving(getContext(),mDialog);
             LOADED = true;
         }
     }

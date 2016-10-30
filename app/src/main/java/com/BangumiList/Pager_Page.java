@@ -6,7 +6,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.BangumiList.bangumi.BangumiFragment;
@@ -24,17 +23,15 @@ public class Pager_Page extends AppCompatActivity {
         mViewPager.setAdapter(new FragmentStatePagerAdapter((FragmentManager) getSupportFragmentManager()) {
             @Override
             public int getCount() {
-                return 3;
+                return 2;
             }
 
             @Override
             public Fragment getItem(int position) {
                 switch (position) {
                     case 0:
-                        return new DMHYQueryList();
-                    case 1:
                         return new BangumiFragment();
-                    case 2:
+                    case 1:
                         return new History_Page();
                     default:
                         return null;
@@ -46,17 +43,15 @@ public class Pager_Page extends AppCompatActivity {
 
     public void FragmentRedirect() {
         switch (getIntent().getAction()) {
-            case "Bangumi":
+            case "DMHY":
                 mViewPager.setCurrentItem(0);
                 break;
-            case "DMHY":
-                mViewPager.setCurrentItem(1);
-                break;
             case "History":
-                mViewPager.setCurrentItem(2);
+                mViewPager.setCurrentItem(1);
                 break;
         }
     }
+
     @Override
     public void onBackPressed() {
         if (mBackPressed + 2000 > System.currentTimeMillis()) {

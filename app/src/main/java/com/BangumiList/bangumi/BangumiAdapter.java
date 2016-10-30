@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.BangumiList.GloVar.BangumiData;
+import com.BangumiList.History_Page;
 import com.BangumiList.R;
 
 import java.util.Collections;
@@ -20,6 +20,8 @@ public class BangumiAdapter extends RecyclerView.Adapter<BangumiAdapter.BangumiH
     List<Bangumi> data = Collections.emptyList();
     ClickListener clickListener;
     Context mContext;
+
+    History_Page.grabBangumi mAsyncTask = null;
 
     public BangumiAdapter(Context mContext, List<Bangumi> data) {
         this.mContext = mContext;
@@ -40,8 +42,9 @@ public class BangumiAdapter extends RecyclerView.Adapter<BangumiAdapter.BangumiH
         Bitmap BitmapTemp;
 
         holder.name.setText(bangumi.getName());
-        if ((BitmapTemp =BangumiList.getBangumiBitmap(bangumi.getName(), mContext)) != null)
+        if ((BitmapTemp = BangumiList.getBangumiBitmap(bangumi.getName(), mContext)) != null)
             holder.image.setImageBitmap(BitmapTemp);
+
     }
 
 

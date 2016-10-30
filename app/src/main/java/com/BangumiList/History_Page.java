@@ -1,9 +1,8 @@
 package com.BangumiList;
 
-import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -16,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.BangumiList.GloVar.BangumiData;
+import com.BangumiList.Util.BaseAsyncBangumi;
 import com.BangumiList.bangumi.Bangumi;
 import com.BangumiList.bangumi.BangumiAdapter;
 import com.BangumiList.bangumi.BangumiList;
@@ -29,14 +29,13 @@ import java.util.List;
 
 public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefreshListener, BangumiAdapter.ClickListener {
 
+    private static Bundle mBundleRecyclerViewState;
+    private final String KEY_RECYCLER_STATE = "recycler_state";
     List<Bangumi> MainBangumiList = new ArrayList<>();
     SwipeRefreshLayout swipe;
     BangumiAdapter adapter;
     RecyclerView recycler;
     View row;
-
-    private static Bundle mBundleRecyclerViewState;
-    private final String KEY_RECYCLER_STATE = "recycler_state";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -50,13 +49,13 @@ public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefre
 
         StaggeredGridLayoutManager gaggeredGridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
 
+        swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
         adapter = new BangumiAdapter(getContext(), MainBangumiList);
 
         recycler = (RecyclerView) row.findViewById(R.id.recycler_bangumi);
         recycler.setAdapter(adapter);
         recycler.setLayoutManager(gaggeredGridLayoutManager);
 
-        swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
         swipe.setOnRefreshListener(this);
         adapter.setClickListener(this);
     }
@@ -90,31 +89,13 @@ public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefre
 
     @Override
     public void onRefresh() {
-        new grabBangumi().execute();
+        new grabBangumi(getContext(), adapter, swipe).execute();
     }
 
-    class grabBangumi extends AsyncTask<Void, Integer, List<Bangumi>> {
+    public class grabBangumi extends BaseAsyncBangumi {
 
-        ProgressDialog mDialog;
-        int mCount = 0;
-        int mSize = 0;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mDialog = new ProgressDialog(getContext());
-            mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mDialog.setTitle(String.format("Loading Information"));
-            mDialog.setIndeterminate(false);
-            mDialog.setCancelable(false);
-            mDialog.show();
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            mDialog.setProgress(mCount);
-            adapter.notifyDataSetChanged();
-            super.onProgressUpdate(values);
+        public grabBangumi(Context context, BangumiAdapter adapter, SwipeRefreshLayout swipe) {
+            super(context, adapter, swipe);
         }
 
         @Override
@@ -122,21 +103,16 @@ public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefre
             List<Bangumi> SeasonList = new ArrayList<>();
             BANGUMI.BangumiInfoList = Collections.emptyList();
 
-            try {
+            publishProgress(0, 2);
+            try{
                 MainParser.update();
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("MainParser", "Error");
-            }
-            while (BANGUMI.getBangumiInfoList().size() <=500 && BANGUMI.BangumiInfoList.isEmpty()) {
-                Log.e("List size" , String.valueOf(BANGUMI.getBangumiInfoList().size()));
             }
             List<BangumiInfo> banList = BANGUMI.getBangumiInfoList();
             mSize = banList.size();
             mDialog.setMax(mSize);
-
             for (BangumiInfo row : banList) {
-                publishProgress(++mCount);
+                publishProgress(++mCount, 3);
                 Bangumi item = new Bangumi(row);
                 SeasonList.add(item);
             }
@@ -145,17 +121,13 @@ public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefre
 
         @Override
         protected void onPostExecute(List<Bangumi> bangumis) {
-            super.onPostExecute(bangumis);
-            Log.e("Postex", "Work");
             if (bangumis != null && !bangumis.isEmpty()) {
                 MainBangumiList.clear();
                 MainBangumiList.addAll(bangumis);
             }
-            swipe.setRefreshing(false);
-            mDialog.dismiss();
-            adapter.notifyDataSetChanged();
             BangumiData.banListB = new BangumiList(MainBangumiList);
-            BangumiData.banListB.renderImage(getContext());
+            BangumiData.banListB.ImageArchiving(getContext(), mDialog);
+            super.onPostExecute(bangumis);
         }
     }
 }

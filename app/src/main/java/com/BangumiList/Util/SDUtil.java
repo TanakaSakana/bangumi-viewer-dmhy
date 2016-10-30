@@ -15,7 +15,7 @@ public class SDUtil {
     public static Bitmap getSDImg(String key, Context context) {
         Bitmap bitmap;
         String HashKey = md5(key);
-        try {
+        try{
             BufferedInputStream in = new BufferedInputStream(context.openFileInput(HashKey));
             bitmap = BitmapFactory.decodeStream(in);
             return bitmap;
@@ -28,7 +28,7 @@ public class SDUtil {
         if (img == null)
             return false;
         String HashKey = md5(key);
-        try {
+        try{
             BufferedOutputStream out = new BufferedOutputStream(context.openFileOutput(HashKey, Context.MODE_PRIVATE));
             img.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
@@ -41,7 +41,7 @@ public class SDUtil {
 
     public static String md5(String in) {
         MessageDigest digest;
-        try {
+        try{
             digest = MessageDigest.getInstance("MD5");
             digest.reset();
             digest.update(in.getBytes());

@@ -1,9 +1,12 @@
 package com.BangumiList.bangumi;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
+import com.BangumiList.GloVar.BangumiData;
 import com.BangumiList.Util.SDUtil;
 
 import java.io.Serializable;
@@ -21,9 +24,9 @@ public class BangumiList implements Serializable {
 
     // This list is use to render bitmap
 
-    private ArrayList<Bangumi> bangumiList = new ArrayList<>();
     private static HashMap<String, Bitmap> bitmapList = new HashMap<>();
     private static ExecutorService executorService;
+    private ArrayList<Bangumi> bangumiList = new ArrayList<>();
 
     public BangumiList(List<Bangumi> list) {
         bangumiList.clear();
@@ -40,31 +43,33 @@ public class BangumiList implements Serializable {
     }
 
     // Image archival strategy
-    public void renderImage(Context mContext) {
+    public void ImageArchiving(Context mContext, final ProgressDialog mDialog) {
+        mDialog.setTitle(BangumiData.PROGRESS_IMAGE_ARCHIVING);
+        mDialog.setMax(bangumiList.size());
         executorService = Executors.newCachedThreadPool();
-
         for (Bangumi item : bangumiList) {
             String Name = item.getName();
             Bitmap BitmapTemp;
             if (!bitmapList.containsKey(Name) || bitmapList.get(Name) == null) {
                 if ((BitmapTemp = SDUtil.getSDImg(Name, mContext)) != null)
                     bitmapList.put(Name, BitmapTemp);
-                else if ((BitmapTemp = getImg(item.getImageLink())) != null) {
+                else if ((BitmapTemp = getImgFromHTTP(item.getImageLink())) != null) {
                     SDUtil.saveSDImg(BitmapTemp, Name, mContext);
                     bitmapList.put(Name, BitmapTemp);
                 }
             }
+            mDialog.incrementProgressBy(1);
         }
         executorService.shutdown();
     }
 
     // Get image from internet
-    public Bitmap getImg(final String path) {
+    public static Bitmap getImgFromHTTP(final String path) {
         Future<Bitmap> future = executorService.submit(new Callable<Bitmap>() {
             @Override
             public Bitmap call() throws Exception {
                 HttpURLConnection connection;
-                try {
+                try{
                     URL url = new URL(path);
                     connection = (HttpURLConnection) url.openConnection();
                     connection.connect();
@@ -76,7 +81,7 @@ public class BangumiList implements Serializable {
                 }
             }
         });
-        try {
+        try{
             return future.get();
         } catch (Exception e) {
             return null;
