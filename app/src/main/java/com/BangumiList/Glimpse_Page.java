@@ -1,7 +1,6 @@
 package com.BangumiList;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -17,18 +16,19 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.BangumiList.GloVar.BangumiData;
-import com.BangumiList.Util.BaseAsyncBangumi;
 import com.BangumiList.bangumi.Bangumi;
-import com.BangumiList.bangumi.BangumiAdapter;
 import com.BangumiList.bangumi.BangumiAdapterSimple;
 import com.BangumiList.bangumi.BangumiList;
+import com.dmhyparser.WikiParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,7 +109,7 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
 
         @Override
         protected List<Bangumi> doInBackground(Void... params) {
-            List<Bangumi> WeeklyList = new ArrayList<Bangumi>();
+            List<Bangumi> WeeklyList = new ArrayList<>();
             final String html = "https://share.dmhy.org/cms/page/name/programme.html/";
             Document doc;
             try{
@@ -137,13 +137,39 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
                         String name = rawAttrs[1];
                         String image = rawAttrs[0].replaceAll("^.*push\\(\\[", "");
                         String link = rawAttrs[4].replaceAll("]\\);", "");
-                        Bangumi item = new Bangumi(name, image, link);
+                        String kw = new String(rawAttrs[2]);
+                        //String kw = new String(rawAttrs[2].getBytes(), Charset.forName("utf-8"));
+                        Bangumi item = new Bangumi(name, image, link, kw);
                         WeeklyList.add(item);
                         // Progress ++
                     }
                 }
                 WeeklyList.remove(0);
-            } catch (IOException e) {
+
+                // Get Description
+                List<Callable<Integer>> threads = new ArrayList<>();
+                mCount = 1;
+                mDialog.setMax(WeeklyList.size());
+                ExecutorService executorService = Executors.newCachedThreadPool();
+
+                for (final Bangumi bangumi : WeeklyList) {
+                    threads.add(new Callable<Integer>() {
+                        @Override
+                        public Integer call() throws Exception {
+                            String desc = WikiParser.getDescriptionWithWIKI_COMBINED(bangumi.getName());
+                            if (desc == null)
+                                desc = WikiParser.getDescriptionWithWIKI_COMBINED(bangumi.getKeyword());
+
+                            Bangumi newItem = bangumi;
+                            newItem.setDescription(desc);
+                            publishProgress(++mCount, 4);
+                            return null;
+                        }
+                    });
+                }
+                executorService.invokeAll(threads);
+                executorService.shutdown();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return WeeklyList;
@@ -164,6 +190,7 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
             adapter.notifyDataSetChanged();
             LOADED = true;
         }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -185,6 +212,9 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
                     break;
                 case 3:
                     MSG = BangumiData.PROGRESS_LOADING;
+                    break;
+                case 4:
+                    MSG = BangumiData.PROGRESS_DESCRIPTION_MINING;
                     break;
                 default:
                     MSG = "";

@@ -1,15 +1,12 @@
 package com.BangumiList.bangumi;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.BangumiList.History_Page;
 import com.BangumiList.R;
 
 import java.util.Collections;
@@ -38,6 +35,7 @@ public class BangumiAdapterSimple extends RecyclerView.Adapter<BangumiAdapterSim
     public void onBindViewHolder(SimpleBangumiHolder holder, int position) {
         Bangumi bangumi = data.get(position);
         holder.name.setText(bangumi.getName());
+        holder.description.setText(bangumi.getDescription());
     }
 
 

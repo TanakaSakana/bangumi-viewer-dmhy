@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +23,7 @@ import com.dmhyparser.info.BANGUMI;
 import com.dmhyparser.info.BangumiInfo;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefreshListener, BangumiAdapter.ClickListener {
@@ -101,17 +100,16 @@ public class History_Page extends Fragment implements SwipeRefreshLayout.OnRefre
         @Override
         protected List<Bangumi> doInBackground(Void... params) {
             List<Bangumi> SeasonList = new ArrayList<>();
-            BANGUMI.BangumiInfoList = Collections.emptyList();
 
             publishProgress(0, 2);
             try{
                 MainParser.update();
             } catch (Exception e) {
             }
-            List<BangumiInfo> banList = BANGUMI.getBangumiInfoList();
+            HashMap<String, BangumiInfo> banList = BANGUMI.getBangumiInfoList();
             mSize = banList.size();
             mDialog.setMax(mSize);
-            for (BangumiInfo row : banList) {
+            for (BangumiInfo row : banList.values()) {
                 publishProgress(++mCount, 3);
                 Bangumi item = new Bangumi(row);
                 SeasonList.add(item);

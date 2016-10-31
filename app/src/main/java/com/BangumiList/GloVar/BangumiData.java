@@ -10,5 +10,6 @@ public class BangumiData {
     public static String PROGRESS_LOADING = "Loading Information";
     public static String PROGRESS_CONNECTIING_INTERNET = "Connecting to Internet";
     public static String PROGRESS_IMAGE_ARCHIVING = "Downloading Images";
+    public static String PROGRESS_DESCRIPTION_MINING = "Retrieving Description";
 
 }
