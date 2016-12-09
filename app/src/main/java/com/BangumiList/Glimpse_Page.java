@@ -14,26 +14,31 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.BangumiList.GloVar.BangumiData;
+import com.BangumiList.Util.Threading;
 import com.BangumiList.bangumi.Bangumi;
 import com.BangumiList.bangumi.BangumiAdapterSimple;
 import com.BangumiList.bangumi.BangumiList;
-import com.dmhyparser.WikiParser;
+import com.dmhyparser.utilparser.CombinedParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Glimpse_Page extends Fragment implements OnRefreshListener, BangumiAdapterSimple.ClickListener {
-
+    private static String TAG = "Glimpse Page";
     public static BangumiList bitmapList;
     static boolean LOADED = false;
     private static Bundle mBundleRecyclerViewState;
@@ -50,8 +55,10 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
 
         adapter = new BangumiAdapterSimple(getContext(), WeeklyList);
         swipe = (SwipeRefreshLayout) row.findViewById(R.id.swipe_bangumi);
-        if (!LOADED)
+        if (!LOADED) {
             new grabBangumi().execute();
+            new Toast(getContext()).makeText(getContext(), "Swipe to Explore", Toast.LENGTH_SHORT).show();
+        }
         return row;
     }
 
@@ -137,7 +144,7 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
                         String name = rawAttrs[1];
                         String image = rawAttrs[0].replaceAll("^.*push\\(\\[", "");
                         String link = rawAttrs[4].replaceAll("]\\);", "");
-                        String kw = new String(rawAttrs[2]);
+                        String kw = URLDecoder.decode(rawAttrs[2]);
                         //String kw = new String(rawAttrs[2].getBytes(), Charset.forName("utf-8"));
                         Bangumi item = new Bangumi(name, image, link, kw);
                         WeeklyList.add(item);
@@ -147,27 +154,46 @@ public class Glimpse_Page extends Fragment implements OnRefreshListener, Bangumi
                 WeeklyList.remove(0);
 
                 // Get Description
-                List<Callable<Integer>> threads = new ArrayList<>();
                 mCount = 1;
                 mDialog.setMax(WeeklyList.size());
-                ExecutorService executorService = Executors.newCachedThreadPool();
+
+                //Init Parallel Object
+                final ExecutorService executorService = Executors.newCachedThreadPool();
+                final ExecutorService executorService2 = Executors.newCachedThreadPool();
+                final CombinedParser combinedParser = new CombinedParser();
+                ArrayList<Callable<Void>> runners = new ArrayList<>();
 
                 for (final Bangumi bangumi : WeeklyList) {
-                    threads.add(new Callable<Integer>() {
+                    runners.add(new Callable<Void>() {
                         @Override
-                        public Integer call() throws Exception {
-                            String desc = WikiParser.getDescriptionWithWIKI_COMBINED(bangumi.getName());
-                            if (desc == null)
-                                desc = WikiParser.getDescriptionWithWIKI_COMBINED(bangumi.getKeyword());
-
-                            Bangumi newItem = bangumi;
-                            newItem.setDescription(desc);
+                        public Void call() {
+                            List<Future<String>> threads = new ArrayList<>();
+                            threads.add(executorService.submit(new Threading(combinedParser, bangumi)));
+                            // Evaluate the description
+                            for (Future<String> thread : threads) {
+                                Bangumi newItem = bangumi;
+                                String res = null;
+                                try{
+                                    res = thread.get();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
+                                }
+                                if (res != null) {
+                                    newItem.setDescription(res);
+                                    threads.clear();
+                                    publishProgress(++mCount, 4);
+                                    break;
+                                }
+                            }
                             publishProgress(++mCount, 4);
                             return null;
                         }
                     });
                 }
-                executorService.invokeAll(threads);
+                executorService2.invokeAll(runners);
+                executorService2.shutdown();
                 executorService.shutdown();
             } catch (Exception e) {
                 e.printStackTrace();

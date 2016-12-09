@@ -1,11 +1,14 @@
 package com.BangumiList;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.BangumiList.bangumi.BangumiFragment;
@@ -13,7 +16,7 @@ import com.BangumiList.bangumi.BangumiFragment;
 public class Pager_Page extends AppCompatActivity {
     private ViewPager mViewPager;
     private long mBackPressed;
-
+private static final String  TAG= "Pager Activity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +44,16 @@ public class Pager_Page extends AppCompatActivity {
                 }
             }
         });
-
+        /*new AlertDialog.Builder(this)
+                .setTitle("預覽版本通知")
+                .setMessage("此程式只完成30%，為預覽版本\n功能完善仍然進行中...")
+                .setPositiveButton("我知道了", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // continue with delete
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();*/
     }
 
     @Override

@@ -2,23 +2,19 @@
 *.apk
 *.ap_
 
-<<<<<<< HEAD
-# Files for the Dalvik VM
-=======
 # Files for the ART/Dalvik VM
->>>>>>> ff1e5887161957bd011e75399a0f5dcad23cea54
 *.dex
 
 # Java class files
 *.class
 
+# Logo Image
+*.png
+
 # Generated files
 bin/
 gen/
-<<<<<<< HEAD
-=======
 out/
->>>>>>> ff1e5887161957bd011e75399a0f5dcad23cea54
 
 # Gradle files
 .gradle/
@@ -38,8 +34,6 @@ proguard/
 
 # Android Studio captures folder
 captures/
-<<<<<<< HEAD
-=======
 
 # Intellij
 *.iml
@@ -47,4 +41,3 @@ captures/
 
 # Keystore files
 *.jks
->>>>>>> ff1e5887161957bd011e75399a0f5dcad23cea54
